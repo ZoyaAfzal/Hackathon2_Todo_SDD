@@ -1,0 +1,353 @@
+'use client'
+
+import { useEffect, useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
+import { LogOut, Loader2, CheckCircle2, Circle, LayoutList } from 'lucide-react'
+import { TaskCard } from '@/components/task-card'
+import { AddTaskForm } from '@/components/add-task-form'
+import { EditTaskForm } from '@/components/edit-task-form'
+import { get, post, put, del } from '@/lib/api-client'
+import { getSession, signOut } from '@/lib/auth-client'
+import { cn } from '@/lib/utils'
+import type { Task, TaskCreate, TaskUpdate, TaskListResponse } from '@/types/task'
+
+export default function TasksPage() {
+  const router = useRouter()
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isCreating, setIsCreating] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editingTask, setEditingTask] = useState<Task | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [hasMore, setHasMore] = useState(false)
+  const [nextCursor, setNextCursor] = useState<string | null>(null)
+
+  const loadTasks = useCallback(async (cursor?: string) => {
+    try {
+      const endpoint = cursor ? `/tasks?after_id=${cursor}` : '/tasks'
+      const response = await get<TaskListResponse>(endpoint)
+
+      if (cursor) {
+        setTasks((prev) => [...prev, ...response.tasks])
+      } else {
+        setTasks(response.tasks)
+      }
+      setHasMore(response.has_more)
+      setNextCursor(response.next_cursor)
+    } catch (err) {
+      if (err instanceof Error && err.message.includes('401')) {
+        router.push('/login')
+        return
+      }
+      setError(err instanceof Error ? err.message : 'Failed to load tasks')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [router])
+
+  useEffect(() => {
+    // Check authentication
+    const checkAuth = async () => {
+      const session = await getSession()
+      if (!session) {
+        router.push('/login')
+        return
+      }
+      loadTasks()
+    }
+
+    checkAuth()
+  }, [router, loadTasks])
+
+  const handleCreateTask = async (data: TaskCreate) => {
+    setIsCreating(true)
+    try {
+      const newTask = await post<Task>('/tasks', data)
+      setTasks((prev) => [newTask, ...prev])
+    } finally {
+      setIsCreating(false)
+    }
+  }
+
+  const handleCompleteTask = async (task: Task) => {
+    const updated = await post<Task>(`/tasks/${task.id}/complete`, {
+      version: task.version,
+    })
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? updated : t)))
+  }
+
+  const handleUncompleteTask = async (task: Task) => {
+    const updated = await post<Task>(`/tasks/${task.id}/uncomplete`, {
+      version: task.version,
+    })
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? updated : t)))
+  }
+
+  const handleDeleteTask = async (task: Task) => {
+    await del(`/tasks/${task.id}`)
+    setTasks((prev) => prev.filter((t) => t.id !== task.id))
+  }
+
+  const handleEditTask = (task: Task) => {
+    setEditingTask(task)
+  }
+
+  const handleSaveEdit = async (taskId: string, data: TaskUpdate) => {
+    setIsEditing(true)
+    try {
+      const updated = await put<Task>(`/tasks/${taskId}`, data)
+      setTasks((prev) => prev.map((t) => (t.id === taskId ? updated : t)))
+      setEditingTask(null)
+    } finally {
+      setIsEditing(false)
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setEditingTask(null)
+  }
+
+  const handleLogout = async () => {
+    await signOut()
+    router.push('/login')
+  }
+
+  const completedTasks = tasks.filter(t => t.completed)
+  const activeTasks = tasks.filter(t => !t.completed)
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center space-y-4"
+        >
+          <Loader2 className="h-12 w-12 text-primary mx-auto animate-spin" />
+          <p className="text-muted-foreground">Loading your tasks...</p>
+        </motion.div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header with gradient */}
+      <header className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur-lg">
+        <div className="max-w-4xl mx-auto px-6 py-6">
+          <div className="flex items-center justify-between">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center gap-3"
+            >
+              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <LayoutList className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-foreground">My Tasks</h1>
+                <p className="text-sm text-muted-foreground">
+                  {activeTasks.length} active · {completedTasks.length} completed
+                </p>
+              </div>
+            </motion.div>
+
+            <motion.button
+              onClick={handleLogout}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className={cn(
+                "flex items-center gap-2 rounded-lg px-4 py-2",
+                "text-sm font-medium text-muted-foreground",
+                "hover:text-foreground hover:bg-accent transition-colors"
+              )}
+            >
+              <LogOut className="h-4 w-4" />
+              Sign out
+            </motion.button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main content */}
+      <main className="max-w-4xl mx-auto px-6 py-8 space-y-8">
+        {/* Error message */}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="rounded-xl bg-destructive/10 border border-destructive/20 px-6 py-4 flex items-start gap-3"
+            >
+              <Circle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-destructive">{error}</p>
+              </div>
+              <button
+                onClick={() => setError(null)}
+                className="text-destructive/70 hover:text-destructive transition-colors"
+              >
+                <motion.div whileHover={{ rotate: 90 }} transition={{ duration: 0.2 }}>
+                  <LogOut className="h-4 w-4" />
+                </motion.div>
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Add task form */}
+        <AddTaskForm onSubmit={handleCreateTask} isLoading={isCreating} />
+
+        {/* Active Tasks Section */}
+        <motion.div layout className="space-y-4">
+          <div className="flex items-center gap-2 px-1">
+            <Circle className="h-4 w-4 text-muted-foreground" />
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              Active Tasks
+            </h2>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+
+          <AnimatePresence mode="popLayout">
+            {activeTasks.length === 0 ? (
+              <motion.div
+                key="empty-active"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="text-center py-16 space-y-3"
+              >
+                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+                  <CheckCircle2 className="h-8 w-8 text-primary" />
+                </div>
+                <p className="text-muted-foreground">All caught up! No active tasks.</p>
+                <p className="text-sm text-muted-foreground/70">
+                  Add a new task above to get started.
+                </p>
+              </motion.div>
+            ) : (
+              <div className="space-y-3">
+                {activeTasks.map((task, index) => (
+                  <motion.div
+                    key={task.id}
+                    layout
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <TaskCard
+                      task={task}
+                      onComplete={handleCompleteTask}
+                      onUncomplete={handleUncompleteTask}
+                      onEdit={handleEditTask}
+                      onDelete={handleDeleteTask}
+                    />
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* Completed Tasks Section */}
+        <AnimatePresence>
+          {completedTasks.length > 0 && (
+            <motion.div
+              layout
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="space-y-4"
+            >
+              <div className="flex items-center gap-2 px-1">
+                <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                  Completed
+                </h2>
+                <div className="h-px flex-1 bg-border" />
+              </div>
+
+              <div className="space-y-3">
+                {completedTasks.map((task, index) => (
+                  <motion.div
+                    key={task.id}
+                    layout
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <TaskCard
+                      task={task}
+                      onComplete={handleCompleteTask}
+                      onUncomplete={handleUncompleteTask}
+                      onEdit={handleEditTask}
+                      onDelete={handleDeleteTask}
+                    />
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Load more */}
+        <AnimatePresence>
+          {hasMore && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="text-center pt-4"
+            >
+              <motion.button
+                onClick={() => loadTasks(nextCursor || undefined)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={cn(
+                  "rounded-lg border border-border bg-card px-6 py-3",
+                  "text-sm font-medium text-foreground",
+                  "hover:bg-accent transition-colors shadow-sm"
+                )}
+              >
+                Load more tasks
+              </motion.button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Empty state for no tasks at all */}
+        {tasks.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-center py-20 space-y-4"
+          >
+            <div className="h-20 w-20 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mx-auto">
+              <LayoutList className="h-10 w-10 text-primary" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-semibold text-foreground">No tasks yet</h3>
+              <p className="text-muted-foreground max-w-md mx-auto">
+                Start organizing your work by creating your first task above.
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </main>
+
+      {/* Edit task modal */}
+      {editingTask && (
+        <EditTaskForm
+          task={editingTask}
+          onSave={handleSaveEdit}
+          onCancel={handleCancelEdit}
+          isLoading={isEditing}
+        />
+      )}
+    </div>
+  )
+}
