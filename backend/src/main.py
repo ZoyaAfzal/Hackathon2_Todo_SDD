@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.api.exceptions import register_exception_handlers
 from src.api.routes.auth import router as auth_router
+from src.api.routes.chat import router as chat_router
 from src.api.routes.tasks import router as tasks_router
 from src.core.config import settings
 
@@ -43,6 +44,7 @@ def create_app() -> FastAPI:
     # Register routers
     app.include_router(auth_router)
     app.include_router(tasks_router)
+    app.include_router(chat_router)
 
     # Health check endpoint
     @app.get("/health")

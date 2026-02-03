@@ -30,6 +30,16 @@ class Settings(BaseSettings):
         default=24, description="JWT token expiration in hours"
     )
 
+    # AI / OpenAI
+    OPENAI_API_KEY: str = Field(
+        default="",
+        description="OpenAI API key for Agents SDK",
+    )
+    OPENAI_MODEL: str = Field(
+        default="gpt-4o-mini",
+        description="OpenAI model for chat agent",
+    )
+
     # Server
     HOST: str = Field(default="0.0.0.0", description="Server host")
     PORT: int = Field(default=8000, description="Server port")
@@ -42,6 +52,8 @@ class Settings(BaseSettings):
             "http://127.0.0.1:3000",
             "http://localhost:3001",
             "http://127.0.0.1:3001",
+            "https://zoya-todo-fullstack.vercel.app",
+            "https://frontend-eosin-xi-26.vercel.app",
         ],
         description="Allowed CORS origins",
     )

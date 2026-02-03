@@ -11,9 +11,11 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session, SQLModel, create_engine
 from sqlmodel.pool import StaticPool
 
+from src.api.deps.database import get_session
 from src.core.config import settings
-from src.core.database import get_session
 from src.main import app
+from src.models.conversation import Conversation
+from src.models.message import Message
 from src.models.task import Task
 from src.models.user import User
 
@@ -21,6 +23,10 @@ from src.models.user import User
 @pytest.fixture(name="engine")
 def engine_fixture():
     """Create an in-memory SQLite engine for testing."""
+    # Import all models to register them with SQLModel.metadata
+    # These imports are needed even though they appear unused
+    _ = (Conversation, Message, Task, User)
+
     engine = create_engine(
         "sqlite://",
         connect_args={"check_same_thread": False},
@@ -38,16 +44,27 @@ def session_fixture(engine) -> Generator[Session, None, None]:
 
 
 @pytest.fixture(name="client")
-def client_fixture(session: Session) -> Generator[TestClient, None, None]:
+def client_fixture(engine, session: Session) -> Generator[TestClient, None, None]:
     """Create a test client with database session override."""
 
     def get_session_override() -> Generator[Session, None, None]:
         yield session
 
+    # Override the get_session dependency
     app.dependency_overrides[get_session] = get_session_override
-    with TestClient(app) as client:
-        yield client
-    app.dependency_overrides.clear()
+
+    # Also need to replace the database module's engine with test engine
+    import src.core.database as db_module
+    original_engine = db_module.engine
+    db_module.engine = engine
+
+    try:
+        with TestClient(app) as client:
+            yield client
+    finally:
+        # Restore original engine
+        db_module.engine = original_engine
+        app.dependency_overrides.clear()
 
 
 @pytest.fixture

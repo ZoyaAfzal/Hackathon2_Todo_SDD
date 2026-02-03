@@ -20,6 +20,10 @@ opentelemetry-instrumentation-fastapi>=0.43b0
 opentelemetry-instrumentation-sqlalchemy>=0.43b0
 opentelemetry-exporter-otlp>=1.22.0
 
+# AI and MCP dependencies
+openai-agents>=0.0.7
+mcp>=1.0.0
+
 # Development dependencies
 pytest>=8.0.0
 pytest-asyncio>=0.23.0

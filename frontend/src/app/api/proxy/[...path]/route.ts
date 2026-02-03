@@ -48,6 +48,20 @@ export async function POST(
       body,
     })
 
+    // Handle SSE streaming responses - pass through without parsing
+    const contentType = response.headers.get('content-type') || ''
+    if (contentType.includes('text/event-stream')) {
+      return new Response(response.body, {
+        status: response.status,
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+          'X-Accel-Buffering': 'no',
+        },
+      })
+    }
+
     const data = await response.json()
     return NextResponse.json(data, { status: response.status })
   } catch (error) {

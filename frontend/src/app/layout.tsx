@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Script from 'next/script'
 import { ToastProvider } from '@/components/toast'
 import './globals.css'
 
@@ -15,6 +16,11 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className="antialiased">
+        {/* ChatKit CDN script for widget styling */}
+        <Script
+          src="https://cdn.platform.openai.com/deployments/chatkit/chatkit.js"
+          strategy="afterInteractive"
+        />
         <ToastProvider>{children}</ToastProvider>
       </body>
     </html>
