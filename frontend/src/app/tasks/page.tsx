@@ -10,7 +10,8 @@ import {
   Circle,
   Sparkles,
   Command,
-  Info
+  Info,
+  MessageCircle
 } from 'lucide-react'
 import {
   DndContext,
@@ -354,6 +355,20 @@ export default function TasksPage() {
             </motion.div>
 
             <div className="flex items-center gap-3">
+              <motion.a
+                href="/chat"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={cn(
+                  'flex items-center gap-2 rounded-xl px-4 py-2 glass-card',
+                  'text-sm font-medium text-muted-foreground',
+                  'hover:text-foreground hover:border-primary/50 transition-all duration-200'
+                )}
+              >
+                <MessageCircle className="h-4 w-4" />
+                <span className="hidden sm:inline">Chat</span>
+              </motion.a>
+
               <motion.button
                 onClick={() => setShowKeyboardHints((prev) => !prev)}
                 whileHover={{ scale: 1.05 }}

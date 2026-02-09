@@ -133,6 +133,7 @@ async def _run_agent(
                     "env": env,
                     "cwd": str(Path(__file__).parent.parent.parent),
                 },
+                client_session_timeout_seconds=30,
             ) as server:
                 agent = Agent(
                     name="Todo Assistant",
@@ -143,7 +144,7 @@ async def _run_agent(
 
                 result = await asyncio.wait_for(
                     Runner.run(agent, input_messages),
-                    timeout=30.0,
+                    timeout=90.0,
                 )
 
                 # Extract tool calls from result
@@ -231,6 +232,7 @@ async def _run_agent_streamed(
                 "env": env,
                 "cwd": str(Path(__file__).parent.parent.parent),
             },
+            client_session_timeout_seconds=30,
         ) as server:
             agent = Agent(
                 name="Todo Assistant",
