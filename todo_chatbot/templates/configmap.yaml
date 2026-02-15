@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "todo-chatbot.fullname" . }}-config
+  labels:
+    {{- include "todo-chatbot.labels" . | nindent 4 }}
+data:
+  # Frontend config
+  NEXT_PUBLIC_APP_URL: {{ .Values.frontend.env.NEXT_PUBLIC_APP_URL | quote }}
+  NEXT_PUBLIC_API_URL: {{ .Values.frontend.env.NEXT_PUBLIC_API_URL | quote }}
+  # Backend config
+  HOST: {{ .Values.backend.env.HOST | quote }}
+  PORT: {{ .Values.backend.env.PORT | quote }}
+  DEBUG: {{ .Values.backend.env.DEBUG | quote }}

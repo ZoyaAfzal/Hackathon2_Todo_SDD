@@ -1,0 +1,76 @@
+# Todo Chatbot Helm Chart - Local Minikube Deployment
+# Frontend: Next.js 16 on port 3000
+# Backend: FastAPI on port 8000
+
+# ── Frontend ──────────────────────────────────────────
+frontend:
+  replicaCount: 1
+  image:
+    repository: todo-frontend
+    tag: latest
+    pullPolicy: Never  # Use local Minikube images
+  service:
+    type: ClusterIP
+    port: 3000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  env:
+    NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+    # Server-side proxy uses this to reach backend within the cluster
+    NEXT_PUBLIC_API_URL: "http://todo-chatbot-backend:8000"
+
+# ── Backend ───────────────────────────────────────────
+backend:
+  replicaCount: 1
+  image:
+    repository: todo-backend
+    tag: latest
+    pullPolicy: Never  # Use local Minikube images
+  service:
+    type: ClusterIP
+    port: 8000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  env:
+    HOST: "0.0.0.0"
+    PORT: "8000"
+    DEBUG: "false"
+
+# ── Secrets (base64 encoded at deploy time) ───────────
+secrets:
+  databaseUrl: ""      # Set via --set or my-secrets.yaml
+  betterAuthSecret: "" # Set via --set or my-secrets.yaml
+  openaiApiKey: ""     # Set via --set or my-secrets.yaml
+
+# ── Ingress (NGINX) ──────────────────────────────────
+ingress:
+  enabled: true
+  className: nginx
+  host: todo-chatbot.local
+  annotations: {}
+
+# ── Service Account ──────────────────────────────────
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+# ── General ──────────────────────────────────────────
+nameOverride: ""
+fullnameOverride: ""
+podAnnotations: {}
+podLabels: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}

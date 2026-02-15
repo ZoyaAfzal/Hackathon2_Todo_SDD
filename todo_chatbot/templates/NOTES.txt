@@ -1,0 +1,45 @@
+========================================================
+  Todo Chatbot - Local Minikube Deployment
+========================================================
+
+Your application has been deployed with:
+  - Frontend: {{ include "todo-chatbot.frontend.fullname" . }} (Next.js on port 3000)
+  - Backend:  {{ include "todo-chatbot.backend.fullname" . }} (FastAPI on port 8000)
+
+{{- if .Values.ingress.enabled }}
+
+1. Add this entry to your hosts file (/etc/hosts or C:\Windows\System32\drivers\etc\hosts):
+
+   $(minikube ip)  {{ .Values.ingress.host }}
+
+   On Linux/WSL, run:
+     echo "$(minikube ip) {{ .Values.ingress.host }}" | sudo tee -a /etc/hosts
+
+2. Access the application:
+   - Frontend: http://{{ .Values.ingress.host }}
+   - Backend API: http://{{ .Values.ingress.host }}/api
+   - Health check: http://{{ .Values.ingress.host }}/health
+
+{{- else }}
+
+1. Port-forward to access the services locally:
+
+   # Frontend
+   kubectl port-forward svc/{{ include "todo-chatbot.frontend.fullname" . }} 3000:{{ .Values.frontend.service.port }}
+
+   # Backend
+   kubectl port-forward svc/{{ include "todo-chatbot.backend.fullname" . }} 8000:{{ .Values.backend.service.port }}
+
+2. Access the application:
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:8000
+   - Health check: http://localhost:8000/health
+
+{{- end }}
+
+3. Check pod status:
+   kubectl get pods -l "app.kubernetes.io/instance={{ .Release.Name }}"
+
+4. View logs:
+   kubectl logs -l "app.kubernetes.io/component=frontend" -f
+   kubectl logs -l "app.kubernetes.io/component=backend" -f

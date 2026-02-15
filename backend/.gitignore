@@ -19,50 +19,36 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
 
 # Virtual environments
 .venv/
 venv/
 ENV/
 env/
-.virtualenv
-my-secrets.yaml
-.my-secrets.yaml
-**/my-secrets.yaml
-
-# PyCharm
-.idea/
-
-# VS Code
-.vscode/
-
-# Testing
-.pytest_cache/
-.coverage
-coverage.xml
-*.cover
-.hypothesis/
-htmlcov/
-
-# Logs
-*.log
 
 # Environment variables
 .env
 .env.local
 .env.*.local
 
-# OS files
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+
+# Alembic
+alembic/versions/__pycache__/
+
+# Logs
+*.log
+
+# OS
 .DS_Store
 Thumbs.db
-*.tmp
-*.swp
-*~
-
-# Type checking
-.mypy_cache/
-.dmypy.json
-dmypy.json
-.pyre/
-.pytype/
