@@ -208,3 +208,10 @@ Wait for consent; never auto-create ADRs. Group related decisions (stacks, authe
 
 ## Code Standards
 See `.specify/memory/constitution.md` for code quality, testing, performance, security, and architecture principles.
+
+## Active Technologies
+- Python 3.11+, TypeScript/Node 20+ + FastAPI, OpenAI Agents SDK (`openai-agents`), (002-phase-3-ai-chatbot)
+- Neon PostgreSQL (existing), SQLModel ORM (002-phase-3-ai-chatbot)
+
+## Recent Changes
+- 002-phase-3-ai-chatbot: Added Python 3.11+, TypeScript/Node 20+ + FastAPI, OpenAI Agents SDK (`openai-agents`),

@@ -1,0 +1,247 @@
+openapi: "3.1.0"
+info:
+  title: "Todo Chatbot API - Phase III"
+  version: "1.0.0"
+  description: "AI-powered chat endpoint for natural language task management"
+
+paths:
+  /api/{user_id}/chat:
+    post:
+      operationId: sendChatMessage
+      summary: Send a chat message to the AI todo assistant
+      description: |
+        Accepts a natural language message, routes it through the AI agent
+        with MCP tools, and returns the assistant's response. Creates a new
+        conversation if conversation_id is not provided.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: "Authenticated user's ID (must match JWT sub claim)"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatRequest"
+      responses:
+        "200":
+          description: Successful chat response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatResponse"
+        "400":
+          description: Invalid request (empty message, message too long)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized (missing or invalid JWT)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden (user_id mismatch with JWT)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Conversation not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Service unavailable (AI model or database failure)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/{user_id}/conversations:
+    get:
+      operationId: listConversations
+      summary: List user's conversations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: List of conversations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ConversationSummary"
+
+  /api/{user_id}/conversations/{conversation_id}/messages:
+    get:
+      operationId: getConversationMessages
+      summary: Get messages for a conversation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: conversation_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: before_sequence
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: "Load messages before this sequence number (for pagination)"
+      responses:
+        "200":
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageList"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ChatRequest:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          minLength: 1
+          maxLength: 10000
+          description: "Natural language message from user"
+        conversation_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "Existing conversation ID to continue, or null for new"
+
+    ChatResponse:
+      type: object
+      required:
+        - conversation_id
+        - reply
+      properties:
+        conversation_id:
+          type: string
+          format: uuid
+          description: "Conversation ID (new or existing)"
+        reply:
+          type: string
+          description: "Assistant's response message"
+        tool_calls:
+          type: array
+          items:
+            $ref: "#/components/schemas/ToolCall"
+          description: "MCP tools invoked during this turn (for transparency)"
+
+    ToolCall:
+      type: object
+      properties:
+        tool_name:
+          type: string
+          enum:
+            - add_task
+            - list_tasks
+            - update_task
+            - complete_task
+            - delete_task
+        arguments:
+          type: object
+        result:
+          type: object
+
+    ConversationSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    MessageList:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/Message"
+        has_more:
+          type: boolean
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [user, assistant]
+        content:
+          type: string
+        tool_calls:
+          type: array
+          items:
+            $ref: "#/components/schemas/ToolCall"
+          nullable: true
+        sequence_number:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+          description: "Human-readable error message"

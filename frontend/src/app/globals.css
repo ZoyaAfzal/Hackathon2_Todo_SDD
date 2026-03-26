@@ -1,0 +1,171 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 0 0% 3.9%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Pure black base with vibrant electric blue/cyan accents */
+    --background: 0 0% 0%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 5%;
+    --card-foreground: 0 0% 98%;
+
+    /* Electric Blue Primary */
+    --primary: 200 100% 50%;
+    --primary-foreground: 0 0% 0%;
+
+    /* Darker secondary */
+    --secondary: 240 5% 12%;
+    --secondary-foreground: 0 0% 98%;
+
+    /* Muted with slight blue tint */
+    --muted: 240 5% 10%;
+    --muted-foreground: 240 5% 65%;
+
+    /* Cyan accent */
+    --accent: 180 100% 50%;
+    --accent-foreground: 0 0% 0%;
+
+    /* Vibrant destructive */
+    --destructive: 0 85% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    /* Subtle borders */
+    --border: 240 10% 15%;
+    --input: 240 10% 12%;
+    --ring: 200 100% 50%;
+
+    /* Success green */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+
+    /* Warning yellow */
+    --warning: 45 93% 47%;
+    --warning-foreground: 0 0% 0%;
+
+    /* Purple for high priority */
+    --priority-high: 280 100% 60%;
+    --priority-medium: 45 93% 47%;
+    --priority-low: 142 76% 36%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
+}
+
+@layer utilities {
+  .animate-in {
+    animation: fade-in 0.3s ease-out;
+  }
+
+  /* Glassmorphism effect */
+  .glass {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* Glow effects */
+  .glow-primary {
+    box-shadow: 0 0 20px rgba(0, 191, 255, 0.3);
+  }
+
+  .glow-accent {
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+  }
+
+  .glow-success {
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+  }
+
+  /* Text gradient */
+  .text-gradient {
+    background: linear-gradient(90deg, rgba(222, 109, 212, 1) 0%, rgba(29, 91, 138, 1) 50%, rgba(160, 227, 242, 1) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Brand gradient - fuchsia to dark blue to cyan */
+  .brand-gradient {
+    background: linear-gradient(90deg, rgba(222, 109, 212, 1) 0%, rgba(29, 91, 138, 1) 50%, rgba(160, 227, 242, 1) 100%);
+  }
+
+  .brand-gradient-reverse {
+    background: linear-gradient(90deg, rgba(160, 227, 242, 1) 0%, rgba(29, 91, 138, 1) 50%, rgba(222, 109, 212, 1) 100%);
+  }
+
+  .brand-gradient-radial {
+    background: radial-gradient(ellipse at center, rgba(29, 91, 138, 0.3) 0%, rgba(222, 109, 212, 0.2) 50%, rgba(160, 227, 242, 0.1) 100%);
+  }
+
+  .text-brand-gradient {
+    background: linear-gradient(90deg, rgba(222, 109, 212, 1) 0%, rgba(29, 91, 138, 1) 50%, rgba(160, 227, 242, 1) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .shadow-brand {
+    box-shadow: 0 10px 40px rgba(222, 109, 212, 0.3), 0 0 80px rgba(29, 91, 138, 0.2);
+  }
+
+  .shadow-brand-sm {
+    box-shadow: 0 4px 20px rgba(222, 109, 212, 0.25);
+  }
+
+  .border-brand {
+    border-color: rgba(222, 109, 212, 0.4);
+  }
+
+  .glow-brand {
+    box-shadow: 0 0 20px rgba(222, 109, 212, 0.4), 0 0 40px rgba(29, 91, 138, 0.2);
+  }
+
+  /* Animated gradient background */
+  @keyframes gradient-shift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient-shift 3s ease infinite;
+  }
+}
